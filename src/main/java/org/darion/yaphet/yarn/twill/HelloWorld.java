@@ -7,6 +7,6 @@ public class HelloWorld {
     public static final Logger LOG = LoggerFactory.getLogger(HelloWorld.class);
 
     public static void main(String[] args) {
-            
+
     }
 }
