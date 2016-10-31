@@ -4,57 +4,45 @@ package org.darion.yaphet.yarn.timestamp;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.service.CompositeService;
-import org.apache.hadoop.yarn.event.AbstractEvent;
-import org.apache.hadoop.yarn.event.AsyncDispatcher;
-import org.apache.hadoop.yarn.event.Dispatcher;
-import org.apache.hadoop.yarn.event.EventHandler;
+import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.yarn.client.api.async.AMRMClientAsync;
+import org.apache.hadoop.yarn.client.api.async.NMClientAsync;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 
-public class TimeStampApplicationMaster extends CompositeService {
+import java.io.IOException;
+
+public class TimeStampApplicationMaster {
 
     private static final Log LOG = LogFactory.getLog(TimeStampApplicationMaster.class);
 
-    private enum TimeStampEventType {
-        START, STOP
+    private Configuration conf;
+
+    // Communicate with the Resource Manager
+    private AMRMClientAsync resourceManagerClient;
+
+    // Communicate with the Node Manager
+    private NMClientAsync nodeManagerClient;
+
+    //Listen and process the response from the Node Manager
+    private NMCallbackHandler containerListener;
+
+    public TimeStampApplicationMaster() {
+        conf = new YarnConfiguration();
     }
 
-    private class TimeStampEvent extends AbstractEvent<TimeStampEventType> {
+    private static void startup() throws IOException {
 
-        public TimeStampEvent(TimeStampEventType timeStampEventType) {
-            super(timeStampEventType);
-        }
+        LOG.info("Prepare TimeStamp ApplicationMaster");
+        Credentials credentials =
+                UserGroupInformation.getCurrentUser().getCredentials();
+
+        UserGroupInformation information = UserGroupInformation.createRemoteUser("maintain");
+        information.addCredentials(credentials);
+
+        LOG.info("Start up TimeStamp ApplicationMaster");
     }
 
-    private class TimeStampDispatcher implements EventHandler<TimeStampEvent> {
-
-        public void handle(TimeStampEvent event) {
-            if (event.getType() == TimeStampEventType.START) {
-                LOG.info("Receive Start Event : ");
-                dispatcher.getEventHandler().handle(new TimeStampEvent(TimeStampEventType.START));
-            } else if (event.getType() == TimeStampEventType.STOP) {
-                LOG.info("Receive Stop Event : ");
-                dispatcher.getEventHandler().handle(new TimeStampEvent(TimeStampEventType.STOP));
-            } else {
-                LOG.info("");
-            }
-
-        }
-    }
-
-    private Dispatcher dispatcher;
-
-    public TimeStampApplicationMaster(String name) {
-        super(name);
-        dispatcher = new AsyncDispatcher();
-    }
-
-    protected void serviceInit(Configuration conf) throws Exception {
-
-    }
-
-    protected void serviceStart() throws Exception {
-
-    }
 
     public static void main(String[] args) {
 
